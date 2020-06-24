@@ -9,6 +9,11 @@ import re
 from msd_pytorch.errors import InputError
 import logging
 
+'''
+This code was copied and adapated from:
+https://github.com/ahendriksen/msd_pytorch/msd_pytorch/image_dataset.py
+'''
+
 
 def _natural_sort(l):
     def key(x):
