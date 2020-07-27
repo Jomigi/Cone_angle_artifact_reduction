@@ -231,8 +231,8 @@ class ImageDataset(Dataset):
 
     def __init__(
         self,
-        input_paths,  # CHANGED by J. Minnema
-        target_paths,  # CHANGED by J. Minnema
+        input_paths,  
+        target_paths, 
         collapse_channels=False,
         labels=None,
     ):
@@ -290,11 +290,9 @@ class ImageDataset(Dataset):
         # segmentation. This is not supported.
         collapse_target = collapse_channels and labels is None
         self.input_stack = ImageStack(
-            input_paths, collapse_channels=collapse_channels # CHANGED by J. Minnema
-        )
+            input_paths, collapse_channels=collapse_channels)
         self.target_stack = ImageStack(
-            target_paths, collapse_channels=collapse_target, labels=labels # CHANGED by J. Minnema
-        )
+            target_paths, collapse_channels=collapse_target, labels=labels)
 
         if len(self.input_stack) != len(self.target_stack):
             raise InputError(
