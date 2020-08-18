@@ -51,4 +51,4 @@ python radial2cartesian.py
 ```
 
 ## License
-The code is licensed under the XXX license - see the LICENSE.md file for details. 
+The code is licensed under the MIT license - see the LICENSE.md file for more details. 
