@@ -31,9 +31,9 @@ import tifffile
 msd_ingredient = Ingredient("msd")
 ex = Experiment('Cone-angle artifact reduction', ingredients=[msd_ingredient])
 
-mongo_user = environ.get('MONGO_SACRED_USER')
-mongo_pass = environ.get('MONGO_SACRED_PASS')
-mongo_host = environ.get('MONGO_SACRED_HOST')
+mongo_user = environ.get('MONGO_USER')
+mongo_pass = environ.get('MONGO_PASS')
+mongo_host = environ.get('MONGO_HOST')
 
 assert mongo_user, 'Setting $MONGO_USER is required'
 assert mongo_pass, 'Setting $MONGO_PASS is required'
@@ -81,9 +81,9 @@ def config():
 ##########################################################################################
 
     # Path to input and target CBCT scans
-    dataset_dir = "/path/to/dataset/"   
+    dataset_dir = "/bigstore/felix/WalnutsRadialSlices/"   
     # Path to store results
-    results_dir = "/path/to/results/"   
+    results_dir = "/export/scratch2/home/felix/ConeBeamResults/"   
     # Path to store network parameters
     save_network_path = os.path.join(
             results_dir, "saved_nets/")
@@ -113,7 +113,7 @@ def config():
     # Determine CBCT scans for training
     training_scans = np.random.choice(
             input_scans, training_nb, replace=False)
-    for i in training_phantoms:
+    for i in training_scans:
         input_scans.remove(i)
 
     # Determine CBCT scans for validation
@@ -174,13 +174,13 @@ def main(msd, network, epochs, in_channels, out_channels, depth, width, reflect,
   
     for i in sorted(test_scans): 
         inp_imgs.extend(natsorted(glob.glob(os.path.join(dataset_dir, 
-            'Walnut{}/Reconstructions/fdk_pos{}_*.tif*'.format(i, position))))
-        tgt_imgs.extend(natsorted(glob.glob(os.path.join(dataset_dir, 
+            'Walnut{}/Reconstructions/fdk_pos{}_*.tif*'.format(i, position)))))
+        tgt_imgs.extend(natsorted(glob.glob(os.path.join(dataset_dir,
             'Walnut{}/Reconstructions/nnls_pos123_*.tif*'.format(i)))))
         
         # Create an additional list in order to process 2D slices for evaluation. 
         # This list is necessary to remember which slices correspond to each walnut. 
-        test_ds.append(ImageDataset(inp_dir, tgt_dir))
+        test_ds.append(ImageDataset(inp_imgs, tgt_imgs))
                      
     print('Test set size', str(len(ImageDataset(inp_imgs, tgt_imgs))))
 
@@ -295,7 +295,7 @@ def main(msd, network, epochs, in_channels, out_channels, depth, width, reflect,
             # Save the result
             path_results = os.path.join(results_dir, 
                     'predictions/Horizontal/{}_pos{}_it{}_depth{}_walnut{}/'.format(
-                        network, position, it, depth, sorted(test_phantoms)[walnut_idx]))
+                        network, position, it, depth, sorted(test_scans)[walnut_idx]))
             if not os.path.exists(path_results):
                 os.makedirs(path_results)
             io.imsave(path_results + '/slice{:05}.tif'.format(idx), img[idx,:,:].astype("float32"))
