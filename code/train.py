@@ -276,4 +276,4 @@ for walnut_idx, ds in enumerate(test_ds):
         io.imsave(path_results + '/slice{:05}.tif'.format(idx), img[idx,:,:].astype("float32"))
     # Print time required for processing
     end = timer()
-    print('segmentation time of walnut{}:'.format(test_scans[walnut_idx]), end-start)
+    print('Processing time of walnut{}:'.format(test_scans[walnut_idx]), end-start)
