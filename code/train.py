@@ -147,16 +147,18 @@ print('Validation set size', str(len(val_ds)))
 inp_imgs = []
 tgt_imgs = []
 test_ds = []
+test_size = 0
 
 for i in sorted(test_scans): 
-    inp_imgs.extend(natsorted(glob.glob(os.path.join(dataset_dir, 
-        'Walnut{}/fdk_pos{}_*.tif*'.format(i, position)))))
-    tgt_imgs.extend(natsorted(glob.glob(os.path.join(dataset_dir,
-        'Walnut{}/iterative_iter50_*.tif*'.format(i)))))
+    inp_imgs = natsorted(glob.glob(os.path.join(dataset_dir, 
+        'Walnut{}/fdk_pos{}_*.tif*'.format(i, position))))
+    tgt_imgs = natsorted(glob.glob(os.path.join(dataset_dir,
+        'Walnut{}/iterative_iter50_*.tif*'.format(i))))
     
     # Create an additional list in order to process 2D slices for evaluation. 
     # This list is necessary to remember which slices correspond to each walnut. 
     test_ds.append(ImageDataset(inp_imgs, tgt_imgs))
+    test_size += len(ImageDataset(inp_imgs, tgt_imgs))
                  
 print('Test set size', str(len(ImageDataset(inp_imgs, tgt_imgs))))
 
