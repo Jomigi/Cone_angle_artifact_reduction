@@ -47,7 +47,7 @@ This folder contain a single script which was used to performed to Radial-to-Car
 
 To run this code:
 ```
-python radial2cartesian.py
+python radial2axial.py
 ```
 
 ## License
