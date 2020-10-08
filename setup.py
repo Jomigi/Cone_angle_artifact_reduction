@@ -1,6 +1,6 @@
 import os
 
-os.system('conda install -y -c conda-forge -c aahendriksen -c pytorch msd_pytorch')
+os.system('conda install -y msd_pytorch cudatoolkit=10.0 -c aahendriksen -c pytorch -c defaults -c conda-forge')
 os.system('conda install -y natsort')
 os.system('conda install -y matplotlib')
 os.system('conda install -y pymongo')
