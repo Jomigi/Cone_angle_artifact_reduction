@@ -25,7 +25,7 @@ Download the [Walnut data set](https://zenodo.org/record/2686726#.Xz0faFozaV4) f
 
 ## Code description
 
-### CT reconstuction
+### CT reconstruction
 The script `generate_training_data.py` contains all code that is necessary to reproduce the reconstruction of cone-beam CT scans as performed in the paper. This includes the computation of FDK reconstruction and iterative ground truth reconstruction and the extraction of radial slices from these volumes via interpolation. Note that as described in the paper, this step is repeated 24 times with rotated scan geometries and only the radial slices close to 0° and 90° are extracted in repetition. The script takes up to one day to run for a single Walnut. To run `generate_training_data.py`, customize the variables in the section "`user defined settings`" and run:
 
 ```
