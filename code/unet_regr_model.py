@@ -1,3 +1,4 @@
+import torch.optim as optim
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -54,8 +55,6 @@ class up(nn.Module):
     def __init__(self, in_ch, out_ch, bilinear=False):
         super(up, self).__init__()
 
-        #  would be a nice idea if the upsampling could be learned too,
-        #  but my machine do not have enough memory to handle all those weights
         if bilinear:
             self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
         else:
@@ -83,18 +82,33 @@ class outconv(nn.Module):
         return x
 
 class UNet(nn.Module):
-    def __init__(self, n_channels, n_classes):
-        super(UNet, self).__init__()
+    def __init__(self, n_channels, n_classes, depth):
+        super(UNet, self).__init__()  #super so it can inherit from nn.Module
+        self.depth=depth
+        #in
         self.inc = inconv(n_channels, 64)
-        self.down1 = down(64, 128)
-        self.down2 = down(128, 256)
-        self.down3 = down(256, 512)
-        self.down4 = down(512, 512)
-        self.up1 = up(1024, 256)
-        self.up2 = up(512, 128)
-        self.up3 = up(256, 64)
-        self.up4 = up(128, 64)
-        self.outc = outconv(64, n_classes)
+
+        #down
+        down_blocks=nn.ModuleList()
+        for layer in range(self.depth-1):
+            down_block = down(2**(6+layer), 2**(6+layer+1))
+            down_blocks.append(down_block)         
+        last_layer=self.depth-1
+        last_down_block=down(2**(6+last_layer), 2**(6+last_layer))
+        down_blocks.append(last_down_block)
+        self.layers_down= down_blocks        
+        #up
+        up_blocks=nn.ModuleList()
+        for layer in range(self.depth-1):
+            up_block=up(2**(6 + self.depth -layer), 2**(6+ self.depth-2 -layer))
+            up_blocks.append(up_block)
+        last_up_block=up(2**(7), 2**(6))
+        up_blocks.append(last_up_block)
+
+        self.layers_up= up_blocks
+
+        #out
+        self. outc = outconv(64, n_classes)
 
     def forward(self, x):
         H, W = x.shape[2:]
@@ -102,17 +116,21 @@ class UNet(nn.Module):
         padding = (Wp // 2, Wp - Wp // 2, Hp // 2, Hp - Hp // 2)
         reflect = nn.ReflectionPad2d(padding)
         x = reflect(x)
-
-        x1 = self.inc(x)
-        x2 = self.down1(x1)
-        x3 = self.down2(x2)
-        x4 = self.down3(x3)
-        x5 = self.down4(x4)
-        x = self.up1(x5, x4)
-        x = self.up2(x, x3)
-        x = self.up3(x, x2)
-        x = self.up4(x, x1)
-        x = self.outc(x)
+        #in
+        outputs=[]
+        x = self.inc(x)
+        outputs.append(x)
+        #down
+        for layer in self.layers_down:
+            x_prev=x    
+            x=layer(x)
+            outputs.append(x)
+        #up
+        reversed_outputs = outputs[::-1]
+        for layer_ind, layer in enumerate(self.layers_up):
+            x= layer(x, reversed_outputs[layer_ind+1])
+        #out
+        x = self.outc(x)       
 
         H2 = H + padding[2] + padding[3]
         W2 = W + padding[0] + padding[1]
@@ -122,7 +140,7 @@ class UNet(nn.Module):
         pass
 
 class UNetRegressionModel(MSDModel):
-    def __init__(self, c_in, c_out, depth, width, loss_function, dilation, reflect, conv3d):
+    def __init__(self,network_path, c_in, c_out, depth, width, loss_function, lr, opt, dilation, reflect, conv3d):
         # Initialize msd network.
         super().__init__(c_in, c_out, 1, 1, dilation)
 
@@ -132,14 +150,25 @@ class UNetRegressionModel(MSDModel):
         self.criterion = loss_functions[loss_function]
         assert(self.criterion is not None)
         # Make Unet
-        self.msd = UNet(c_in, 1)
+        self.msd = UNet(c_in, 1, depth)
 
         # Initialize network
         self.net = nn.Sequential(self.scale_in, self.msd, self.scale_out)
         self.net.cuda()
+    
+        print(self.net, file=open(network_path +"model_summary.txt", "w"))
+        model_parameters = filter(lambda p: p.requires_grad, self.msd.parameters())
+        parameters = sum([np.prod(p.size()) for p in model_parameters])
+        print("- parameters: %f" % parameters)
+
+        print('Number of trainable parameters is {}'.format(parameters), file=open(network_path +"model_summary.txt", "a"))
 
         # Train all parameters apart from self.scale_in.
-        self.init_optimizer(self.msd)
+        self.lr=lr
+        if opt == 'RMSprop':
+            self.optimizer = optim.RMSprop(self.msd.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
+        elif opt == 'Adam':
+            self.optimizer = optim.Adam(self.msd.parameters())
 
     def set_normalization(self, dataloader):
         """Normalize input data.
