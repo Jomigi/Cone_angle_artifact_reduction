@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/200652141.svg)](https://zenodo.org/badge/latestdoi/200652141)
+
 # Cone Angle Artifact Reduction using symmetry-aware deep learning
 
 This repository contains code that was used to perform the experiments described in the paper "Efficient High Cone-Angle Artifact Reduction in Circular Cone-Beam CT using Symmetry-Aware Deep Learning with Dimension Reduction" by Minnema et al.
