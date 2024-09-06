@@ -14,7 +14,7 @@
 
 
 # File name of the script that is run:
-script='main.py'
+script='train.py'
 
 # Parameters that will be used for validation:
 DEPTH=(10 30 50 70 80 90 100)
